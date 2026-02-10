@@ -5,18 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Chat extends Model
+class ChatSession extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'user_id',
-        'session_id',
-        'message',
-        'role',
+        'name',
+        'last_message_at',
     ];
 
     protected $casts = [
+        'last_message_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -26,8 +26,14 @@ class Chat extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function session()
+    public function messages()
     {
-        return $this->belongsTo(ChatSession::class);
+        return $this->hasMany(Chat::class, 'session_id');
+    }
+
+    public function updateLastMessageTime()
+    {
+        $this->last_message_at = now();
+        $this->save();
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Chat;
+use App\Models\ChatSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -11,16 +12,43 @@ class ChatController extends Controller
 {
     public function index()
     {
-        // Show all chats for public access
-        $chats = Chat::orderBy('created_at', 'asc')->get();
+        // Get current session or create a new one
+        $sessionId = session('chat_session_id');
+        if (!$sessionId) {
+            $session = ChatSession::create([
+                'user_id' => auth()->id(),
+                'name' => 'New Conversation',
+            ]);
+            session(['chat_session_id' => $session->id]);
+            $sessionId = $session->id;
+        }
 
-        return view('chat.index', compact('chats'));
+        // Get messages for current session
+        $chats = Chat::where('session_id', $sessionId)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        // Get chat history for sidebar
+        $chatHistory = ChatSession::where('user_id', auth()->id())
+            ->orWhereNull('user_id')
+            ->orderBy('last_message_at', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        return view('chat.index', compact('chats', 'chatHistory', 'sessionId'));
     }
 
     public function getMessages()
     {
-        // Return all chat messages for the frontend
-        $chats = Chat::orderBy('created_at', 'asc')->get();
+        $sessionId = session('chat_session_id');
+        if (!$sessionId) {
+            return response()->json([]);
+        }
+
+        $chats = Chat::where('session_id', $sessionId)
+            ->orderBy('created_at', 'asc')
+            ->get();
 
         return response()->json($chats);
     }
@@ -31,27 +59,173 @@ class ChatController extends Controller
             'message' => 'required|string|max:2000',
         ]);
 
-        // Save user message (user_id can be null for public chat)
+        $sessionId = session('chat_session_id');
+        if (!$sessionId) {
+            // Create new session
+            $session = ChatSession::create([
+                'user_id' => auth()->id(),
+                'name' => 'New Conversation',
+            ]);
+            session(['chat_session_id' => $session->id]);
+            $sessionId = $session->id;
+        }
+
+        // Save user message
         $userChat = Chat::create([
-            'user_id' => auth()->id() ?? null, // Allow null for public users
+            'user_id' => auth()->id() ?? null,
+            'session_id' => $sessionId,
             'message' => $request->message,
             'role' => 'user',
         ]);
-        
-        // Get AI response (using Groq API with fallback)
+
+        // Get AI response
         $aiResponse = $this->getAiResponse($request->message);
 
         // Save assistant response
         $assistantChat = Chat::create([
-            'user_id' => auth()->id() ?? null, // Use same user_id as user message for consistency
+            'user_id' => auth()->id() ?? null,
+            'session_id' => $sessionId,
             'message' => $aiResponse,
             'role' => 'assistant',
         ]);
+
+        // Update session last message time
+        $session = ChatSession::find($sessionId);
+        if ($session) {
+            $session->updateLastMessageTime();
+        }
+
+        // Generate chat name after first user message
+        $this->generateChatNameForSession($sessionId);
 
         return response()->json([
             'user_message' => $userChat,
             'assistant_message' => $assistantChat,
         ]);
+    }
+
+    private function generateChatNameForSession($sessionId)
+    {
+        // Generate a name based on the first user message
+        $firstUserMessage = Chat::where('session_id', $sessionId)
+            ->where('role', 'user')
+            ->orderBy('created_at', 'asc')
+            ->first();
+
+        if ($firstUserMessage && !$this->isSessionNamed($sessionId)) {
+            $message = $firstUserMessage->message;
+            $name = $this->generateNameFromMessage($message);
+            
+            // Update session name
+            $session = ChatSession::find($sessionId);
+            if ($session) {
+                $session->name = $name;
+                $session->save();
+            }
+        }
+    }
+
+    private function isSessionNamed($sessionId)
+    {
+        $session = ChatSession::find($sessionId);
+        return $session && $session->name && $session->name !== 'New Conversation';
+    }
+
+    public function newChat(Request $request)
+    {
+        // Create new chat session
+        $session = ChatSession::create([
+            'user_id' => auth()->id(),
+            'name' => 'New Conversation',
+        ]);
+        
+        session(['chat_session_id' => $session->id]);
+        
+        return response()->json([
+            'session_id' => $session->id,
+            'session_name' => $session->name,
+        ]);
+    }
+
+    public function loadChat(Request $request, $sessionId)
+    {
+        $session = ChatSession::find($sessionId);
+        
+        if (!$session) {
+            return response()->json(['error' => 'Chat session not found'], 404);
+        }
+
+        // Update current session
+        session(['chat_session_id' => $sessionId]);
+        
+        // Get messages for this session
+        $chats = Chat::where('session_id', $sessionId)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return response()->json([
+            'session' => $session,
+            'messages' => $chats,
+        ]);
+    }
+
+    public function getChatHistory(Request $request)
+    {
+        $chatHistory = ChatSession::where('user_id', auth()->id())
+            ->orWhereNull('user_id')
+            ->orderBy('last_message_at', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        return response()->json($chatHistory);
+    }
+
+    public function generateChatName(Request $request)
+    {
+        $sessionId = $request->input('session_id');
+        $messages = Chat::where('session_id', $sessionId)
+            ->orderBy('created_at', 'asc')
+            ->limit(5)
+            ->get();
+
+        if ($messages->isEmpty()) {
+            return response()->json(['name' => 'New Conversation']);
+        }
+
+        // Generate a name based on the first user message
+        $firstUserMessage = $messages->firstWhere('role', 'user');
+        if ($firstUserMessage) {
+            $message = $firstUserMessage->message;
+            $name = $this->generateNameFromMessage($message);
+            
+            // Update session name
+            $session = ChatSession::find($sessionId);
+            if ($session) {
+                $session->name = $name;
+                $session->save();
+            }
+
+            return response()->json(['name' => $name]);
+        }
+
+        return response()->json(['name' => 'New Conversation']);
+    }
+
+    private function generateNameFromMessage($message)
+    {
+        // Simple logic to generate a name from the first message
+        $message = trim($message);
+        $message = preg_replace('/[^\w\s]/', '', $message);
+        $words = explode(' ', $message);
+        
+        if (count($words) > 4) {
+            $name = implode(' ', array_slice($words, 0, 4)) . '...';
+        } else {
+            $name = $message;
+        }
+
+        return strlen($name) > 30 ? substr($name, 0, 27) . '...' : $name;
     }
 
     private function getAiResponse($message)

@@ -459,6 +459,9 @@
         const sidebar = document.getElementById('sidebar');
         const historyList = document.getElementById('historyList');
         const chatTitle = document.getElementById('chatTitle');
+        
+        // State
+        let currentSessionId = null;
 
         // Auto-resize textarea
         function autoResize(textarea) {
@@ -622,34 +625,140 @@
         }
 
         // Create new chat
-        function createNewChat() {
-            chatMessages.innerHTML = `
-                <div class="message-container">
-                    <div class="message-avatar ai-avatar-bg">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div class="message-content">
-                        Hello! I'm your AI assistant. How can I help you today?
-                    </div>
-                </div>
-            `;
+        async function createNewChat() {
+            try {
+                const response = await fetch('/new-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentSessionId = data.session_id;
+                    
+                    // Clear chat messages
+                    chatMessages.innerHTML = `
+                        <div class="message-container">
+                            <div class="message-avatar ai-avatar-bg">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                Hello! I'm your AI assistant. How can I help you today?
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add to history
+                    const newHistoryItem = document.createElement('div');
+                    newHistoryItem.className = 'history-item active';
+                    newHistoryItem.innerHTML = `
+                        <i class="fas fa-message"></i>
+                        <span>${data.session_name}</span>
+                    `;
+                    
+                    // Update other items
+                    document.querySelectorAll('.history-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    historyList.insertBefore(newHistoryItem, historyList.firstChild);
+                    chatTitle.textContent = data.session_name;
+                    scrollToBottom();
+                    
+                    // Refresh chat history
+                    loadChatHistory();
+                } else {
+                    throw new Error('Failed to create new chat');
+                }
+            } catch (error) {
+                console.error('Error creating new chat:', error);
+                alert('Failed to create new chat. Please try again.');
+            }
+        }
+
+        // Load chat history
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('/chat-history', {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+
+                if (response.ok) {
+                    const history = await response.json();
+                    renderChatHistory(history);
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        // Render chat history
+        function renderChatHistory(history) {
+            historyList.innerHTML = '';
             
-            // Add to history
-            const newHistoryItem = document.createElement('div');
-            newHistoryItem.className = 'history-item active';
-            newHistoryItem.innerHTML = `
-                <i class="fas fa-message"></i>
-                <span>New Conversation</span>
-            `;
-            
-            // Update other items
-            document.querySelectorAll('.history-item').forEach(item => {
-                item.classList.remove('active');
+            history.forEach((session, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = index === 0 ? 'history-item active' : 'history-item';
+                historyItem.dataset.sessionId = session.id;
+                historyItem.innerHTML = `
+                    <i class="fas fa-message"></i>
+                    <span>${session.name || 'New Conversation'}</span>
+                `;
+                historyList.appendChild(historyItem);
             });
+        }
+
+        // Load specific chat
+        async function loadChat(sessionId) {
+            try {
+                const response = await fetch(`/load-chat/${sessionId}`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentSessionId = data.session.id;
+                    
+                    // Update UI
+                    document.querySelectorAll('.history-item').forEach(item => {
+                        item.classList.remove('active');
+                        if (item.dataset.sessionId == sessionId) {
+                            item.classList.add('active');
+                        }
+                    });
+                    
+                    chatTitle.textContent = data.session.name || 'New Conversation';
+                    
+                    // Render messages
+                    renderMessages(data.messages);
+                    
+                    // Close sidebar on mobile
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('active');
+                    }
+                } else {
+                    throw new Error('Failed to load chat');
+                }
+            } catch (error) {
+                console.error('Error loading chat:', error);
+                alert('Failed to load chat. Please try again.');
+            }
+        }
+
+        // Render messages
+        function renderMessages(messages) {
+            chatMessages.innerHTML = '';
             
-            historyList.insertBefore(newHistoryItem, historyList.firstChild);
-            chatTitle.textContent = 'New Conversation';
-            scrollToBottom();
+            messages.forEach(message => {
+                addMessage(message.message, message.role === 'user');
+            });
         }
 
         // Event Listeners
@@ -680,47 +789,16 @@
         historyList.addEventListener('click', (e) => {
             const historyItem = e.target.closest('.history-item');
             if (historyItem) {
-                document.querySelectorAll('.history-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                historyItem.classList.add('active');
-                chatTitle.textContent = historyItem.querySelector('span').textContent;
-                
-                // Load chat history (simulated)
-                chatMessages.innerHTML = `
-                    <div class="message-container">
-                        <div class="message-avatar ai-avatar-bg">
-                            <i class="fas fa-robot"></i>
-                        </div>
-                        <div class="message-content">
-                            Loading conversation "${historyItem.querySelector('span').textContent}"...
-                        </div>
-                    </div>
-                `;
-                
-                setTimeout(() => {
-                    chatMessages.innerHTML = `
-                        <div class="message-container">
-                            <div class="message-avatar ai-avatar-bg">
-                                <i class="fas fa-robot"></i>
-                            </div>
-                            <div class="message-content">
-                                This is the "${historyItem.querySelector('span').textContent}" conversation.
-                            </div>
-                        </div>
-                    `;
-                    scrollToBottom();
-                }, 500);
-                
-                // Close sidebar on mobile
-                if (window.innerWidth <= 768) {
-                    sidebar.classList.remove('active');
+                const sessionId = historyItem.dataset.sessionId;
+                if (sessionId) {
+                    loadChat(sessionId);
                 }
             }
         });
 
         // Initialize
         messageInput.focus();
+        loadChatHistory();
         scrollToBottom();
     </script>
 </body>

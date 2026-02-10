@@ -105,5 +105,9 @@ Route::get('/test-groq', function() {
 Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
 Route::get('/chat/messages', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
 Route::post('/send-message', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('send.message');
+Route::post('/new-chat', [App\Http\Controllers\ChatController::class, 'newChat'])->name('new.chat');
+Route::get('/load-chat/{sessionId}', [App\Http\Controllers\ChatController::class, 'loadChat'])->name('load.chat');
+Route::get('/chat-history', [App\Http\Controllers\ChatController::class, 'getChatHistory'])->name('chat.history');
+Route::post('/generate-chat-name', [App\Http\Controllers\ChatController::class, 'generateChatName'])->name('generate.chat.name');
 
 
