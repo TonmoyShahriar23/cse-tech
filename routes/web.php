@@ -110,4 +110,9 @@ Route::get('/load-chat/{sessionId}', [App\Http\Controllers\ChatController::class
 Route::get('/chat-history', [App\Http\Controllers\ChatController::class, 'getChatHistory'])->name('chat.history');
 Route::post('/generate-chat-name', [App\Http\Controllers\ChatController::class, 'generateChatName'])->name('generate.chat.name');
 
+// Chat management endpoints
+Route::post('/rename-chat', [App\Http\Controllers\ChatController::class, 'renameChat'])->name('rename.chat');
+Route::post('/toggle-pin-chat', [App\Http\Controllers\ChatController::class, 'togglePinChat'])->name('toggle.pin.chat');
+Route::post('/delete-chat', [App\Http\Controllers\ChatController::class, 'deleteChat'])->name('delete.chat');
+
 

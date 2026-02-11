@@ -14,7 +14,21 @@ class ChatController extends Controller
     {
         // Get current session or create a new one
         $sessionId = session('chat_session_id');
-        if (!$sessionId) {
+        
+        // Check if session exists and is valid
+        if ($sessionId) {
+            $session = ChatSession::find($sessionId);
+            if (!$session) {
+                // Session doesn't exist (was deleted), create a new one
+                $session = ChatSession::create([
+                    'user_id' => auth()->id(),
+                    'name' => 'New Conversation',
+                ]);
+                session(['chat_session_id' => $session->id]);
+                $sessionId = $session->id;
+            }
+        } else {
+            // No session in session storage, create a new one
             $session = ChatSession::create([
                 'user_id' => auth()->id(),
                 'name' => 'New Conversation',
@@ -24,6 +38,18 @@ class ChatController extends Controller
         }
 
         // Get messages for current session
+        // Double-check that the session still exists before fetching messages
+        $session = ChatSession::find($sessionId);
+        if (!$session) {
+            // Session was deleted, create a new one and update session storage
+            $session = ChatSession::create([
+                'user_id' => auth()->id(),
+                'name' => 'New Conversation',
+            ]);
+            session(['chat_session_id' => $session->id]);
+            $sessionId = $session->id;
+        }
+        
         $chats = Chat::where('session_id', $sessionId)
             ->orderBy('created_at', 'asc')
             ->get();
@@ -31,6 +57,8 @@ class ChatController extends Controller
         // Get chat history for sidebar
         $chatHistory = ChatSession::where('user_id', auth()->id())
             ->orWhereNull('user_id')
+            ->orderBy('is_pinned', 'desc')
+            ->orderBy('pinned_at', 'desc')
             ->orderBy('last_message_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->limit(20)
@@ -43,6 +71,14 @@ class ChatController extends Controller
     {
         $sessionId = session('chat_session_id');
         if (!$sessionId) {
+            return response()->json([]);
+        }
+
+        // Check if session exists before fetching messages
+        $session = ChatSession::find($sessionId);
+        if (!$session) {
+            // Session doesn't exist, clear the session and return empty messages
+            session()->forget('chat_session_id');
             return response()->json([]);
         }
 
@@ -173,6 +209,8 @@ class ChatController extends Controller
     {
         $chatHistory = ChatSession::where('user_id', auth()->id())
             ->orWhereNull('user_id')
+            ->orderBy('is_pinned', 'desc')
+            ->orderBy('pinned_at', 'desc')
             ->orderBy('last_message_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->limit(20)
@@ -226,6 +264,78 @@ class ChatController extends Controller
         }
 
         return strlen($name) > 30 ? substr($name, 0, 27) . '...' : $name;
+    }
+
+    // Rename chat endpoint
+    public function renameChat(Request $request)
+    {
+        $request->validate([
+            'session_id' => 'required|exists:chat_sessions,id',
+            'name' => 'required|string|max:60',
+        ]);
+
+        $session = ChatSession::find($request->session_id);
+
+        // Check ownership
+        if ($session->user_id !== auth()->id() && $session->user_id !== null) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $session->name = $request->name;
+        $session->save();
+
+        return response()->json([
+            'success' => true,
+            'session' => $session,
+        ]);
+    }
+
+    // Pin/Unpin chat endpoint
+    public function togglePinChat(Request $request)
+    {
+        $request->validate([
+            'session_id' => 'required|exists:chat_sessions,id',
+        ]);
+
+        $session = ChatSession::find($request->session_id);
+
+        // Check ownership
+        if ($session->user_id !== auth()->id() && $session->user_id !== null) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $session->togglePin();
+
+        return response()->json([
+            'success' => true,
+            'session' => $session,
+        ]);
+    }
+
+    // Delete chat endpoint
+    public function deleteChat(Request $request)
+    {
+        $request->validate([
+            'session_id' => 'required|exists:chat_sessions,id',
+        ]);
+
+        $session = ChatSession::find($request->session_id);
+
+        // Check ownership
+        if ($session->user_id !== auth()->id() && $session->user_id !== null) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Delete related messages first
+        Chat::where('session_id', $session->id)->delete();
+        
+        // Delete the session
+        $session->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Chat deleted successfully',
+        ]);
     }
 
     private function getAiResponse($message)

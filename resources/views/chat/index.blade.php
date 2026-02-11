@@ -76,6 +76,7 @@
             align-items: center;
             gap: 12px;
             transition: background 0.2s ease;
+            position: relative;
         }
 
         .history-item:hover {
@@ -84,6 +85,79 @@
 
         .history-item.active {
             background: #343541;
+        }
+
+        .history-item:hover .chat-options-btn {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .chat-options-btn {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: #8e8ea0;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            opacity: 0;
+            pointer-events: none;
+            font-size: 16px;
+        }
+
+        .chat-options-btn:hover {
+            color: #ececf1;
+            background: #40414f;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 12px;
+            background: #202123;
+            border: 1px solid #4d4d4f;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            min-width: 160px;
+        }
+
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #ececf1;
+            border-bottom: 1px solid #4d4d4f;
+            transition: background 0.2s ease;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: #343541;
+        }
+
+        .dropdown-item.danger {
+            color: #ff6b6b;
+        }
+
+        .dropdown-item.danger:hover {
+            background: #3a1f1f;
+        }
+
+        .pin-indicator {
+            color: #f1c40f;
+            margin-right: 8px;
+            font-size: 14px;
         }
 
         .sidebar-footer {
@@ -705,9 +779,24 @@
                 const historyItem = document.createElement('div');
                 historyItem.className = index === 0 ? 'history-item active' : 'history-item';
                 historyItem.dataset.sessionId = session.id;
+                historyItem.dataset.isPinned = session.is_pinned || false;
                 historyItem.innerHTML = `
-                    <i class="fas fa-message"></i>
+                    ${session.is_pinned ? '<i class="pin-indicator fas fa-thumbtack"></i>' : '<i class="fas fa-message"></i>'}
                     <span>${session.name || 'New Conversation'}</span>
+                    <button class="chat-options-btn" onclick="toggleDropdown(event, ${session.id})">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div class="dropdown-menu" id="dropdown-${session.id}">
+                        <div class="dropdown-item" onclick="renameChat(${session.id})">
+                            <i class="fas fa-edit"></i> Rename
+                        </div>
+                        <div class="dropdown-item" onclick="togglePinChat(${session.id})">
+                            <i class="fas fa-thumbtack"></i> ${session.is_pinned ? 'Unpin Chat' : 'Pin Chat'}
+                        </div>
+                        <div class="dropdown-item danger" onclick="deleteChat(${session.id})">
+                            <i class="fas fa-trash"></i> Delete
+                        </div>
+                    </div>
                 `;
                 historyList.appendChild(historyItem);
             });
@@ -796,10 +885,289 @@
             }
         });
 
+        // Dropdown menu functionality
+        function toggleDropdown(event, sessionId) {
+            event.stopPropagation();
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.id !== `dropdown-${sessionId}`) {
+                    menu.classList.remove('active');
+                }
+            });
+            
+            // Toggle current dropdown
+            const dropdown = document.getElementById(`dropdown-${sessionId}`);
+            dropdown.classList.toggle('active');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown-menu') && !e.target.closest('.chat-options-btn')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.remove('active');
+                });
+            }
+        });
+
+        // Close dropdowns on ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.remove('active');
+                });
+            }
+        });
+
+        // Rename chat functionality
+        async function renameChat(sessionId) {
+            const historyItem = document.querySelector(`.history-item[data-session-id="${sessionId}"]`);
+            const span = historyItem.querySelector('span');
+            const originalName = span.textContent;
+            
+            // Replace span with input
+            span.innerHTML = `<input type="text" value="${originalName}" style="background: #343541; border: 1px solid #565869; color: white; padding: 4px 8px; border-radius: 4px; width: 100%;" />`;
+            
+            const input = span.querySelector('input');
+            input.focus();
+            input.select();
+            
+            // Handle save on Enter or blur
+            const saveRename = async () => {
+                const newName = input.value.trim();
+                if (!newName || newName === originalName) {
+                    span.textContent = originalName;
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/rename-chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            name: newName
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        span.textContent = data.session.name;
+                        
+                        // Update current chat title if this is the active chat
+                        if (currentSessionId == sessionId) {
+                            chatTitle.textContent = data.session.name;
+                        }
+                    } else {
+                        throw new Error('Failed to rename chat');
+                    }
+                } catch (error) {
+                    console.error('Error renaming chat:', error);
+                    span.textContent = originalName;
+                    alert('Failed to rename chat. Please try again.');
+                }
+            };
+            
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveRename();
+                } else if (e.key === 'Escape') {
+                    span.textContent = originalName;
+                }
+            });
+            
+            input.addEventListener('blur', saveRename);
+        }
+
+        // Pin/Unpin chat functionality
+        async function togglePinChat(sessionId) {
+            try {
+                const response = await fetch('/toggle-pin-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const historyItem = document.querySelector(`.history-item[data-session-id="${sessionId}"]`);
+                    
+                    // Update the UI immediately
+                    const pinIcon = historyItem.querySelector('.pin-indicator');
+                    const messageIcon = historyItem.querySelector('i.fas.fa-message');
+                    
+                    if (data.session.is_pinned) {
+                        // Add pin indicator
+                        if (!pinIcon) {
+                            const pinSpan = document.createElement('i');
+                            pinSpan.className = 'pin-indicator fas fa-thumbtack';
+                            historyItem.insertBefore(pinSpan, historyItem.querySelector('span'));
+                        }
+                        if (messageIcon) {
+                            messageIcon.className = 'fas fa-message';
+                        }
+                    } else {
+                        // Remove pin indicator
+                        if (pinIcon) {
+                            pinIcon.remove();
+                        }
+                        if (messageIcon) {
+                            messageIcon.className = 'fas fa-message';
+                        }
+                    }
+                    
+                    // Update dropdown menu text
+                    const dropdown = document.getElementById(`dropdown-${sessionId}`);
+                    const pinMenuItem = dropdown.querySelector('.dropdown-item:nth-child(2)');
+                    pinMenuItem.innerHTML = `<i class="fas fa-thumbtack"></i> ${data.session.is_pinned ? 'Unpin Chat' : 'Pin Chat'}`;
+                    
+                    // Reorder the history items manually instead of reloading
+                    const historyItems = Array.from(historyList.children);
+                    const pinnedItems = historyItems.filter(item => item.querySelector('.pin-indicator'));
+                    const unpinnedItems = historyItems.filter(item => !item.querySelector('.pin-indicator'));
+                    
+                    // Clear and reorder
+                    historyList.innerHTML = '';
+                    [...pinnedItems, ...unpinnedItems].forEach(item => {
+                        historyList.appendChild(item);
+                    });
+                } else {
+                    throw new Error('Failed to toggle pin');
+                }
+            } catch (error) {
+                console.error('Error toggling pin:', error);
+                alert('Failed to toggle pin. Please try again.');
+            }
+        }
+
+        // Delete chat functionality
+        async function deleteChat(sessionId) {
+            if (!confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/delete-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId
+                    })
+                });
+                
+                if (response.ok) {
+                    // Remove from UI
+                    const historyItem = document.querySelector(`.history-item[data-session-id="${sessionId}"]`);
+                    if (historyItem) {
+                        historyItem.remove();
+                    }
+                    
+                    // If this was the current chat, create a new one
+                    if (currentSessionId == sessionId) {
+                        // Clear current chat state immediately to prevent any loading attempts
+                        currentSessionId = null;
+                        
+                        // Clear current chat messages
+                        chatMessages.innerHTML = `
+                            <div class="message-container">
+                                <div class="message-avatar ai-avatar-bg">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="message-content">
+                                    Chat deleted successfully! Starting a new conversation...
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Create new chat session
+                        const newResponse = await fetch('/new-chat', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            }
+                        });
+
+                        if (newResponse.ok) {
+                            const data = await newResponse.json();
+                            currentSessionId = data.session_id;
+                            
+                            // Update chat title
+                            chatTitle.textContent = data.session_name;
+                            
+                            // Add new chat to history without reloading
+                            const newHistoryItem = document.createElement('div');
+                            newHistoryItem.className = 'history-item active';
+                            newHistoryItem.dataset.sessionId = data.session_id;
+                            newHistoryItem.innerHTML = `
+                                <i class="fas fa-message"></i>
+                                <span>${data.session_name}</span>
+                                <button class="chat-options-btn" onclick="toggleDropdown(event, ${data.session_id})">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <div class="dropdown-menu" id="dropdown-${data.session_id}">
+                                    <div class="dropdown-item" onclick="renameChat(${data.session_id})">
+                                        <i class="fas fa-edit"></i> Rename
+                                    </div>
+                                    <div class="dropdown-item" onclick="togglePinChat(${data.session_id})">
+                                        <i class="fas fa-thumbtack"></i> Pin Chat
+                                    </div>
+                                    <div class="dropdown-item danger" onclick="deleteChat(${data.session_id})">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Update other items
+                            document.querySelectorAll('.history-item').forEach(item => {
+                                item.classList.remove('active');
+                            });
+                            
+                            historyList.insertBefore(newHistoryItem, historyList.firstChild);
+                        }
+                    } else {
+                        // Just remove the deleted item from history without reloading
+                        const historyItem = document.querySelector(`.history-item[data-session-id="${sessionId}"]`);
+                        if (historyItem) {
+                            historyItem.remove();
+                        }
+                    }
+                    
+                    // Show success message
+                    alert('Chat deleted successfully!');
+                } else {
+                    throw new Error('Failed to delete chat');
+                }
+            } catch (error) {
+                console.error('Error deleting chat:', error);
+                alert('Failed to delete chat. Please try again.');
+            }
+        }
+
         // Initialize
         messageInput.focus();
         loadChatHistory();
         scrollToBottom();
+        
+        // Add global error handling to catch any unexpected "Failed to load chat" errors
+        window.addEventListener('unhandledrejection', (event) => {
+            if (event.reason && event.reason.message && event.reason.message.includes('Failed to load chat')) {
+                event.preventDefault();
+                console.warn('Caught failed to load chat error, ignoring...');
+            }
+        });
     </script>
 </body>
 </html>
