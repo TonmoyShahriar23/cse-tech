@@ -655,6 +655,15 @@
             const message = messageInput.value.trim();
             if (!message) return;
 
+            // Check if we have a valid session before sending
+            if (!currentSessionId) {
+                // No active session, create a new one
+                await createNewChat();
+                // Retry sending the message after creating new chat
+                messageInput.value = message; // Restore the message
+                return sendMessage(); // Recursive call with new session
+            }
+
             // Add user message
             addMessage(message, true);
             messageInput.value = '';
@@ -684,6 +693,29 @@
                     
                     // Add assistant response
                     addMessage(data.assistant_message.message, false);
+                } else if (response.status === 404) {
+                    // Session not found (likely deleted)
+                    console.warn('Session not found, creating new chat...');
+                    currentSessionId = null;
+                    
+                    // Clear current chat messages
+                    chatMessages.innerHTML = `
+                        <div class="message-container">
+                            <div class="message-avatar ai-avatar-bg">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                This chat no longer exists. Starting a new conversation...
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Create new chat session
+                    await createNewChat();
+                    
+                    // Resend the message to the new session
+                    messageInput.value = message; // Restore the message
+                    return sendMessage(); // Recursive call with new session
                 } else {
                     throw new Error('Failed to get response from server');
                 }
@@ -832,12 +864,44 @@
                     if (window.innerWidth <= 768) {
                         sidebar.classList.remove('active');
                     }
+                } else if (response.status === 404) {
+                    // Chat not found (likely deleted)
+                    console.warn('Chat not found, likely deleted:', sessionId);
+                    
+                    // Remove from history if it exists
+                    const historyItem = document.querySelector(`.history-item[data-session-id="${sessionId}"]`);
+                    if (historyItem) {
+                        historyItem.remove();
+                    }
+                    
+                    // If this was the current chat, create a new one
+                    if (currentSessionId == sessionId) {
+                        currentSessionId = null;
+                        
+                        // Clear current chat messages
+                        chatMessages.innerHTML = `
+                            <div class="message-container">
+                                <div class="message-avatar ai-avatar-bg">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="message-content">
+                                    This chat no longer exists. Starting a new conversation...
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Create new chat session
+                        await createNewChat();
+                    }
                 } else {
                     throw new Error('Failed to load chat');
                 }
             } catch (error) {
                 console.error('Error loading chat:', error);
-                alert('Failed to load chat. Please try again.');
+                // Don't show alert for 404 errors as we handle them gracefully above
+                if (!error.message.includes('404')) {
+                    alert('Failed to load chat. Please try again.');
+                }
             }
         }
 
