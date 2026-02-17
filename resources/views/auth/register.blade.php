@@ -217,7 +217,7 @@
             <p class="subtitle">Join us today and get started</p>
         </div>
 
-        <form method="POST" action="{{ route('register') }}">
+        <form method="POST" action="{{ route('register.store') }}">
             @csrf
 
             <div class="form-group">

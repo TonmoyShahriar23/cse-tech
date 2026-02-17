@@ -12,11 +12,17 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// OTP Registration routes (override default register route)
+Route::get('/register', [App\Http\Controllers\Registerwithotpcontroller::class, 'create'])->name('register.create');
+Route::post('/register', [App\Http\Controllers\Registerwithotpcontroller::class, 'store'])->name('register.store');
+Route::get('/otp/verify', [App\Http\Controllers\Registerwithotpcontroller::class, 'showVerifyForm'])->name('otp.verify.form');
+Route::post('/otp/verify', [App\Http\Controllers\Registerwithotpcontroller::class, 'verify'])->name('otp.verify');
+Route::post('/otp/resend', [App\Http\Controllers\OtpController::class, 'resendOtp'])->name('otp.resend');
+Route::get('/otp/status', [App\Http\Controllers\OtpController::class, 'checkOtpStatus'])->name('otp.status');
+
 // Authentication routes
 Route::get('/login', [App\Http\Controllers\AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [App\Http\Controllers\AuthController::class, 'login']);
-Route::get('/register', [App\Http\Controllers\AuthController::class, 'showRegisterForm'])->name('register');
-Route::post('/register', [App\Http\Controllers\AuthController::class, 'register']);
 Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout'])->name('logout');
 
 Route::get('/students', [StudentController::class, 'index'])->name('students.index');

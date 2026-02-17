@@ -309,7 +309,7 @@
         
         <div class="register-link">
             Don't have an account? 
-            <a href="{{ route('register') }}">Sign up here</a>
+            <a href="{{ route('register.create') }}">Sign up here</a>
         </div>
     </div>
 </body>
