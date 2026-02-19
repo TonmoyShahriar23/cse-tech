@@ -97,7 +97,8 @@ class Registerwithotpcontroller extends Controller
         }
 
         if ($otpRecord->otp !== $enteredOtp) {
-            return back()->withErrors(['otp' => 'Invalid OTP. Please try again.']);
+            // Wrong OTP entered, but OTP is still valid - allow retry within same 2-minute window
+            return back()->withErrors(['otp' => 'Your entered OTP code is wrong. Please enter the correct OTP.'])->withInput();
         }
 
         // Get temporary user data

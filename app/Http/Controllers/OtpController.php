@@ -21,15 +21,11 @@ class OtpController extends Controller
             return back()->withErrors(['email' => 'No OTP found for this email.']);
         }
 
-        if (!$otpRecord->isExpired()) {
-            return back()->withErrors(['email' => 'OTP is still valid. Please wait before requesting a new one.']);
-        }
-
-        // Generate new OTP
+        // Generate new OTP regardless of expiration status
         $newOtp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
         $expiredAt = now()->addMinutes(2);
 
-        // Update OTP record
+        // Update OTP record with new OTP and fresh 2-minute timer
         $otpRecord->update([
             'otp' => $newOtp,
             'expired_at' => $expiredAt
@@ -38,7 +34,7 @@ class OtpController extends Controller
         // Send new OTP email
         Mail::to($request->email)->send(new OtpMail($newOtp, 'User'));
 
-        return back()->with('success', 'New OTP sent to your email.');
+        return back()->with('success', 'New OTP sent to your email. You have 2 minutes to enter it.');
     }
 
     public function checkOtpStatus(Request $request)
