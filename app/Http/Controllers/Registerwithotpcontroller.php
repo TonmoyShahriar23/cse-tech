@@ -50,7 +50,7 @@ class Registerwithotpcontroller extends Controller
         }
 
         // Send OTP email
-        Mail::to($request->email)->send(new OtpMail($otp, $request->name));
+        Mail::to($request->email)->queue(new OtpMail($otp, $request->name));
 
         // Store user data temporarily (you might want to use session or cache)
         session([

@@ -294,13 +294,8 @@
             const otpError = document.querySelector('.text-red-600');
             if (otpError && otpError.textContent.includes('wrong')) {
                 triggerErrorAnimation();
-            }
-            
-            // Check if new OTP was sent (success message present)
-            const successMessage = document.querySelector('.bg-green-50');
-            if (successMessage && successMessage.textContent.includes('New OTP sent')) {
-                // Don't reset timer - it should continue from the 2-minute window
-                // Just clear the input and focus for fresh entry
+                // Timer continues running - don't reset it
+                // Just clear the input for fresh entry but keep the timer
                 otpInput.value = '';
                 for (let i = 0; i < 6; i++) {
                     hiddenInputs[i].value = '';
@@ -311,6 +306,13 @@
                 otpInput.style.borderColor = 'rgba(255, 255, 255, 0.3)';
                 otpInput.style.boxShadow = 'none';
                 otpInput.style.transform = 'translateY(0)';
+            }
+            
+            // Check if new OTP was sent (success message present)
+            const successMessage = document.querySelector('.bg-green-50');
+            if (successMessage && successMessage.textContent.includes('New OTP sent')) {
+                // Reset timer when new OTP is sent
+                resetCountdownTimer();
             }
         });
 
