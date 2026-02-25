@@ -15,11 +15,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Seed roles and permissions first
+        $this->call(RolesAndPermissionsSeeder::class);
+        
+        // Create default admin user
+        \App\Models\User::factory()->create([
+            'name' => 'Admin User',
+            'email' => 'admin@example.com',
+            'role_id' => \App\Models\Role::where('name', 'super_admin')->first()->id,
+        ]);
+        
+        // Create test users for different roles
+        \App\Models\User::factory(5)->create([
+            'role_id' => \App\Models\Role::where('name', 'normal_user')->first()->id,
+        ]);
+        
+        \App\Models\User::factory(3)->create([
+            'role_id' => \App\Models\Role::where('name', 'premium_user')->first()->id,
+            'subscription_status' => 'premium',
+            'subscription_ends_at' => now()->addYear(),
+        ]);
+        
+        \App\Models\User::factory(2)->create([
+            'role_id' => \App\Models\Role::where('name', 'admin')->first()->id,
         ]);
     }
 }

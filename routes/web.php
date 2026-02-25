@@ -12,6 +12,54 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Regular user dashboard
+Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+// Profile routes
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Email Verification Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/email/verify', function () {
+        return view('auth.verify-email');
+    })->name('verification.notice');
+
+    Route::get('/email/verify/{id}/{hash}', function (Illuminate\Foundation\Auth\EmailVerificationRequest $request) {
+        $request->fulfill();
+        return redirect('/dashboard');
+    })->middleware(['auth', 'signed'])->name('verification.verify');
+
+    Route::post('/email/verification-notification', function (Illuminate\Http\Request $request) {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect('/dashboard');
+        }
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('message', 'Verification link sent!');
+    })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+});
+
+// Password Update Routes
+Route::middleware(['auth'])->group(function () {
+    Route::put('/password', function (Illuminate\Http\Request $request) {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'string', 'min:8', 'confirmed', 'different:current_password'],
+        ]);
+
+        $request->user()->update([
+            'password' => bcrypt($validated['password']),
+        ]);
+
+        return back()->with('status', 'password-updated');
+    })->name('password.update');
+});
+
 // OTP Registration routes (override default register route)
 Route::get('/register', [App\Http\Controllers\Registerwithotpcontroller::class, 'create'])->name('register.create');
 Route::post('/register', [App\Http\Controllers\Registerwithotpcontroller::class, 'store'])->name('register.store');
@@ -33,6 +81,7 @@ Route::put('/students/{student}', [StudentController::class, 'update'])->name('s
 Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
 
 require __DIR__.'/api.php';
+require __DIR__.'/admin.php';
 
 // Test route for debugging Groq API
 Route::get('/test-groq', function() {
