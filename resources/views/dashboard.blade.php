@@ -10,7 +10,7 @@
                 <div class="relative z-10">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h1 class="text-3xl font-bold text-white mb-2">Welcome back, {{ Auth::user()->name ?? 'User' }}! 👋</h1>
+                            <h1 class="text-3xl font-bold text-white mb-2">Welcome back, {{ Auth::user()->name ?? 'User' }}! </h1>
                             <p class="text-purple-100 text-lg">Here's what's happening with your account today</p>
                         </div>
                         <div class="hidden md:block">

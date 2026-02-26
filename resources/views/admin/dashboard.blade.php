@@ -5,7 +5,7 @@
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <!-- Welcome Section -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Welcome back, {{ Auth::user()->name }}! 👋</h1>
+            <h1 class="text-3xl font-bold text-gray-900">Welcome back, {{ Auth::user()->name }}! </h1>
             <p class="text-gray-600 mt-2">Here's what's happening with your platform today.</p>
         </div>
 
