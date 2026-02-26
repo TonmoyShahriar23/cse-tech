@@ -30,15 +30,16 @@
             <!-- Total Students Card -->
             <div class="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-1">
                 <div class="p-6">
-                    <div class="flex items-center">
+                    <div class="flex items-center gap-6">
                         <div class="flex-shrink-0 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl p-4">
                             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                             </svg>
                         </div>
                         <div class="ml-5">
+                            <!-- <p class="text-gray-500 text-sm font-medium uppercase tracking-wide">Total Students</p> -->
                             <p class="text-gray-500 text-sm font-medium uppercase tracking-wide">Total Students</p>
-                            <p class="text-2xl font-bold text-gray-900">245</p>
+                            <p class="text-2xl font-bold text-gray-900">10</p>
                         </div>
                     </div>
                 </div>
@@ -47,7 +48,7 @@
             <!-- Active Chats Card -->
             <div class="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-1">
                 <div class="p-6">
-                    <div class="flex items-center">
+                    <div class="flex items-center gap-6">
                         <div class="flex-shrink-0 bg-gradient-to-br from-green-400 to-green-600 rounded-xl p-4">
                             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
@@ -81,7 +82,7 @@
             <!-- Messages Card -->
             <div class="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-1">
                 <div class="p-6">
-                    <div class="flex items-center">
+                    <div class="flex items-center gap-6">
                         <div class="flex-shrink-0 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl p-4">
                             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
