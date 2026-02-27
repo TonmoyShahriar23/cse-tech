@@ -146,7 +146,7 @@ Route::prefix('admin')
                     ->name('create')
                     ->middleware('permission:role_system_modify');
                 
-                Route::put('/{role}', [UserController::class, 'updateRole'])
+                Route::put('/{role}', [UserController::class, 'updateRolePermissions'])
                     ->name('update')
                     ->middleware('permission:role_system_modify');
                 

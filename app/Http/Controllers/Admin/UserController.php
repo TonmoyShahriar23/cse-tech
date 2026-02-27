@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\RoleService;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Chat;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -59,7 +60,7 @@ class UserController extends Controller
             }
         }
 
-        $users = $query->latest()->paginate(20);
+        $users = $query->orderBy('id', 'asc')->paginate(20);
         $roles = Role::whereNotIn('name', ['super_admin'])->get();
 
         return view('admin.users.index', compact('users', 'roles'));

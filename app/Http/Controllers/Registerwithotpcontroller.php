@@ -113,6 +113,7 @@ class Registerwithotpcontroller extends Controller
             'name' => $tempUserData['name'],
             'email' => $tempUserData['email'],
             'password' => Hash::make($tempUserData['password']),
+            'role_id' => 1, // Set as normal user by default
         ]);
 
         // Clear OTP record

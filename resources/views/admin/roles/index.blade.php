@@ -688,6 +688,21 @@
         document.getElementById('editDescription').value = description;
         document.getElementById('editRoleForm').action = '/admin/roles/' + roleId;
         document.getElementById('editRoleModal').classList.remove('hidden');
+        
+        // Load current permissions for this role
+        loadRolePermissions(roleId);
+    }
+    
+    // Load role permissions for edit modal
+    function loadRolePermissions(roleId) {
+        // Clear all checkboxes first
+        document.querySelectorAll('.permission-checkbox').forEach(cb => {
+            cb.checked = false;
+        });
+        
+        // This would need to be implemented with AJAX to fetch current permissions
+        // For now, we'll leave it as a placeholder for future enhancement
+        console.log('Loading permissions for role:', roleId);
     }
     
     // Permission Search
