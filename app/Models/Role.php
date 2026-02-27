@@ -71,7 +71,7 @@ class Role extends Model
      */
     public function syncPermissions(array $permissionNames)
     {
-        $permissions = Permission::whereIn('name', $permissionNames)->pluck('id');
+        $permissions = Permission::whereIn('name', $permissionNames)->get()->pluck('id');
         $this->permissions()->sync($permissions);
     }
 }
