@@ -328,7 +328,7 @@ class UserController extends Controller
             'permissions' => $request->permissions ?? [],
         ]);
 
-        return back()->with('success', 'Role created successfully.');
+        return redirect()->route('admin.roles.index')->with('success', 'Role created successfully.');
     }
 
     /**
@@ -363,5 +363,47 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    /**
+     * Display assign roles form.
+     */
+    public function assignRoles()
+    {
+        $users = User::with('role')
+            ->whereHas('role', function ($query) {
+                $query->whereNotIn('name', ['super_admin']);
+            })
+            ->get();
+        
+        $roles = Role::whereNotIn('name', ['super_admin'])->get();
+
+        return view('admin.roles.assign', compact('users', 'roles'));
+    }
+
+    /**
+     * Process assign roles form.
+     */
+    public function processAssignRoles(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'role_id' => 'required|exists:roles,id',
+        ]);
+
+        $user = User::find($request->user_id);
+        $role = Role::find($request->role_id);
+
+        if (!$user || !$role) {
+            return back()->with('error', 'User or role not found.');
+        }
+
+        if ($role->name === 'super_admin') {
+            return back()->with('error', 'Cannot assign super admin role through this form.');
+        }
+
+        $this->roleService->assignRole($user, $role->name);
+
+        return back()->with('success', "Role {$role->display_name} assigned to {$user->name} successfully.");
     }
 }

@@ -142,6 +142,14 @@ Route::prefix('admin')
                     ->name('index')
                     ->middleware('permission:role_system_modify');
                 
+                Route::get('/assign', [UserController::class, 'assignRoles'])
+                    ->name('assign')
+                    ->middleware('permission:user_role_change');
+                
+                Route::post('/assign', [UserController::class, 'processAssignRoles'])
+                    ->name('assign.process')
+                    ->middleware('permission:user_role_change');
+                
                 Route::post('/', [UserController::class, 'createRole'])
                     ->name('create')
                     ->middleware('permission:role_system_modify');

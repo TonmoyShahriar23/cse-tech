@@ -118,6 +118,20 @@
                     </div>
                 </a>
 
+                <!-- Assign Roles Card -->
+                <a href="{{ route('admin.roles.assign') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 hover:border-orange-200">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="bg-orange-100 group-hover:bg-orange-600 rounded-full p-4 mb-4 transition-colors duration-300">
+                            <svg class="w-6 h-6 text-orange-600 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12v4m0 0l3-3m-3 3l-3-3"></path>
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 group-hover:text-orange-600 transition-colors duration-300">Assign Roles</h3>
+                        <p class="text-sm text-gray-500 mt-2">Assign roles to users</p>
+                    </div>
+                </a>
+
                 <!-- Manage Roles Card -->
                 <a href="{{ route('admin.roles.index') }}" class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 hover:border-yellow-200">
                     <div class="flex flex-col items-center text-center">
