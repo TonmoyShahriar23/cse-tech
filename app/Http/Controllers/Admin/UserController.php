@@ -374,6 +374,7 @@ class UserController extends Controller
             ->whereHas('role', function ($query) {
                 $query->whereNotIn('name', ['super_admin']);
             })
+            ->orderBy('id', 'asc')
             ->get();
         
         $roles = Role::whereNotIn('name', ['super_admin'])->get();
