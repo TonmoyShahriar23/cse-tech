@@ -63,9 +63,16 @@
                                     </form>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button class="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-full transform transition hover:scale-105">
-                                        Report
-                                    </button>
+                                    <div class="flex space-x-2">
+                                        <a href="{{ route('admin.users.chat_report', $user) }}" 
+                                           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded inline-block text-sm">
+                                            View Report
+                                        </a>
+                                        <a href="{{ route('admin.users.chat_report_download', $user) }}" 
+                                           class="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-2 px-3 rounded inline-block text-sm">
+                                            Download PDF
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             @endforeach

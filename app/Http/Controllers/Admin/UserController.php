@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\Chat;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class UserController extends Controller
 {
@@ -245,6 +246,49 @@ class UserController extends Controller
         $lastActivity = $user->chatSessions()->latest()->first()?->last_message_at;
 
         return view('admin.users.usage', compact('user', 'chatCount', 'messageCount', 'lastActivity'));
+    }
+
+    /**
+     * Generate chat history report for a user.
+     */
+    public function generateChatReport(User $user)
+    {
+        // Get all chat sessions for the user
+        $chatSessions = $user->chatSessions()
+            ->with(['messages'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Get all messages for the user
+        $messages = Chat::where('user_id', $user->id)
+            ->with('session')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return view('admin.users.chat_report', compact('user', 'chatSessions', 'messages'));
+    }
+
+    /**
+     * Generate and download chat history report as PDF for a user.
+     */
+    public function downloadChatReport(User $user)
+    {
+        // Get all chat sessions for the user
+        $chatSessions = $user->chatSessions()
+            ->with(['messages'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Get all messages for the user
+        $messages = Chat::where('user_id', $user->id)
+            ->with('session')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $pdf = Pdf::loadView('admin.users.chat_report', compact('user', 'chatSessions', 'messages'))
+                  ->setPaper('A4', 'portrait');
+
+        return $pdf->download('chat_history_report_' . $user->name . '_' . now()->format('Y-m-d') . '.pdf');
     }
 
     /**

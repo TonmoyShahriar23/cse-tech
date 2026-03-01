@@ -227,4 +227,12 @@ class User extends Authenticatable
                (!$this->is_suspended || 
                 ($this->suspended_until && $this->suspended_until->isPast()));
     }
+
+    /**
+     * Get the chat sessions for the user.
+     */
+    public function chatSessions()
+    {
+        return $this->hasMany(\App\Models\ChatSession::class, 'user_id');
+    }
 }

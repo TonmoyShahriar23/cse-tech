@@ -64,6 +64,14 @@ Route::prefix('admin')
                 Route::get('/{user}/usage', [UserController::class, 'viewUsage'])
                     ->name('usage')
                     ->middleware('permission:user_usage_view');
+                
+                Route::get('/{user}/chat-report', [UserController::class, 'generateChatReport'])
+                    ->name('chat_report')
+                    ->middleware('permission:chat_logs_view');
+                
+                Route::get('/{user}/chat-report/download', [UserController::class, 'downloadChatReport'])
+                    ->name('chat_report_download')
+                    ->middleware('permission:chat_logs_view');
             });
 
         // Analytics
