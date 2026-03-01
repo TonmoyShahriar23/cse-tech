@@ -63,7 +63,7 @@
                                     </form>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button class="bg-gradient-to-r from-pink-300 to-orange-300 hover:from-pink-400 hover:to-orange-400 text-white font-bold py-2 px-4 rounded-full shadow-lg transform transition hover:scale-105">
+                                    <button class="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-full transform transition hover:scale-105">
                                         Report
                                     </button>
                                 </td>
