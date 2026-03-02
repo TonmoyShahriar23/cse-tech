@@ -72,6 +72,10 @@ Route::prefix('admin')
                 Route::get('/{user}/chat-report/download', [UserController::class, 'downloadChatReport'])
                     ->name('chat_report_download')
                     ->middleware('permission:chat_logs_view');
+                
+                Route::get('/{user}/chat-report/test/download', [UserController::class, 'downloadChatReportTest'])
+                    ->name('chat_report_test_download')
+                    ->middleware('permission:chat_logs_view');
             });
 
         // Analytics

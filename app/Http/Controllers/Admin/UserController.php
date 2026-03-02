@@ -285,10 +285,51 @@ class UserController extends Controller
             ->orderBy('created_at', 'asc')
             ->get();
 
+        // Debug: Log the messages to see what we're getting
+        \Log::info('Chat report for user: ' . $user->name);
+        \Log::info('Total messages: ' . $messages->count());
+        \Log::info('Message roles: ' . $messages->pluck('role')->unique()->implode(', '));
+        
+        foreach ($messages as $message) {
+            \Log::info('Message ID: ' . $message->id . ', Role: ' . $message->role . ', Content: ' . substr($message->message, 0, 50) . '...');
+        }
+
         $pdf = Pdf::loadView('admin.users.chat_report', compact('user', 'chatSessions', 'messages'))
                   ->setPaper('A4', 'portrait');
 
         return $pdf->download('chat_history_report_' . $user->name . '_' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Generate and download test chat history report as PDF for a user.
+     */
+    public function downloadChatReportTest(User $user)
+    {
+        // Get all chat sessions for the user
+        $chatSessions = $user->chatSessions()
+            ->with(['messages'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Get all messages for the user
+        $messages = Chat::where('user_id', $user->id)
+            ->with('session')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        // Debug: Log the messages to see what we're getting
+        \Log::info('Chat report test for user: ' . $user->name);
+        \Log::info('Total messages: ' . $messages->count());
+        \Log::info('Message roles: ' . $messages->pluck('role')->unique()->implode(', '));
+        
+        foreach ($messages as $message) {
+            \Log::info('Message ID: ' . $message->id . ', Role: ' . $message->role . ', Content: ' . substr($message->message, 0, 50) . '...');
+        }
+
+        $pdf = Pdf::loadView('admin.users.chat_report_test', compact('user', 'chatSessions', 'messages'))
+                  ->setPaper('A4', 'portrait');
+
+        return $pdf->download('chat_history_report_test_' . $user->name . '_' . now()->format('Y-m-d') . '.pdf');
     }
 
     /**

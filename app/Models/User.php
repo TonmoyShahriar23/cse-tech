@@ -235,4 +235,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\ChatSession::class, 'user_id');
     }
+
+    /**
+     * Get the chats for the user.
+     */
+    public function chats()
+    {
+        return $this->hasMany(\App\Models\Chat::class, 'user_id');
+    }
 }
