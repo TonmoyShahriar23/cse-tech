@@ -31,7 +31,7 @@ class SubscriptionController extends Controller
             $query->where('subscription_status', $request->status);
         }
 
-        $users = $query->latest()->paginate(20);
+        $users = $query->orderBy('id', 'asc')->paginate(20);
 
         return view('admin.subscriptions.index', compact('users'));
     }
