@@ -182,6 +182,59 @@
             font-weight: bold;
         }
 
+        .user-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-email {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .upgrade-btn {
+            background: #10a37f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .upgrade-btn:hover {
+            background: #0f8f6b;
+        }
+
+        .plan-badge {
+            background: rgba(255, 255, 255, 0.1);
+            color: #8e8ea0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .plan-badge.plus {
+            background: rgba(16, 163, 127, 0.2);
+            border-color: rgba(16, 163, 127, 0.4);
+            color: #10a37f;
+        }
+
         /* Main Chat Area */
         .main-content {
             flex: 1;
@@ -475,10 +528,23 @@
             
             <div class="sidebar-footer">
                 <div class="user-info">
-                    <div class="user-avatar">U</div>
-                    <div>
-                        <div class="user-name">User</div>
-                        <div class="user-email text-xs text-gray-400">user@example.com</div>
+                    <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
+                    <div class="user-details">
+                        <div class="user-email text-xs text-gray-400">{{ auth()->user()->email }}</div>
+                        <div class="user-actions">
+                            @if(!auth()->user()->isPremium())
+                                <button class="upgrade-btn" onclick="window.location.href='{{ route('pricing.index') }}'">
+                                    Upgrade
+                                </button>
+                            @endif
+                            <span class="plan-badge {{ auth()->user()->isPremium() ? 'plus' : '' }}">
+                                @if(auth()->user()->isPremium())
+                                    PLUS
+                                @else
+                                    FREE
+                                @endif
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>

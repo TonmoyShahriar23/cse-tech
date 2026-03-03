@@ -181,5 +181,10 @@ Route::post('/rename-chat', [App\Http\Controllers\ChatController::class, 'rename
 Route::post('/toggle-pin-chat', [App\Http\Controllers\ChatController::class, 'togglePinChat'])->name('toggle.pin.chat');
 Route::post('/delete-chat', [App\Http\Controllers\ChatController::class, 'deleteChat'])->name('delete.chat');
 
+// Pricing page route
+Route::get('/pricing', function() {
+    return view('pricing.index');
+})->name('pricing.index');
+
 
 
