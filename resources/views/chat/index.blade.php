@@ -256,13 +256,13 @@
         .user-menu-modal {
             position: absolute;
             bottom: calc(100% + 10px); /* Open upward from the trigger */
-            left: 0; /* Align to left edge of trigger */
+            left: 10px; /* Add left padding */
+            right: 10px; /* Add right padding */
             background: #202123;
             border: 1px solid #4d4d4f;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            min-width: 280px;
-            max-width: 300px; /* Limit width to fit screen */
+            max-width: none; /* Remove width constraints */
             z-index: 10000; /* Increased z-index */
             opacity: 0;
             transform: translateY(10px); /* Start below and slide up */
@@ -314,6 +314,10 @@
         .user-profile-info p {
             font-size: 12px;
             color: #8e8ea0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
         .menu-divider {
@@ -354,19 +358,16 @@
         }
 
         .menu-item.upgrade-plan {
-            background: rgba(16, 163, 127, 0.1);
-            border: 1px solid rgba(16, 163, 127, 0.3);
-            color: #10a37f;
-            border-radius: 8px;
+            color: #ececf1;
             margin-bottom: 4px;
         }
 
         .menu-item.upgrade-plan:hover {
-            background: rgba(16, 163, 127, 0.15);
+            background: #343541;
         }
 
         .menu-item.upgrade-plan .icon {
-            color: #10a37f;
+            color: #8e8ea0;
         }
 
         .menu-item.logout {
