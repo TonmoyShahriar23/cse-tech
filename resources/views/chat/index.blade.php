@@ -163,6 +163,8 @@
         .sidebar-footer {
             padding: 16px;
             border-top: 1px solid #4d4d4f;
+            position: relative; /* Ensure modal can position relative to this */
+            overflow: visible; /* Allow modal to break out */
         }
 
         .user-info {
@@ -233,6 +235,151 @@
             background: rgba(16, 163, 127, 0.2);
             border-color: rgba(16, 163, 127, 0.4);
             color: #10a37f;
+        }
+
+        /* User Menu Modal */
+        .user-menu-trigger {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+            position: relative;
+        }
+
+        .user-menu-trigger:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .user-menu-modal {
+            position: absolute;
+            bottom: calc(100% + 10px); /* Open upward from the trigger */
+            left: 0; /* Align to left edge of trigger */
+            background: #202123;
+            border: 1px solid #4d4d4f;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            min-width: 280px;
+            max-width: 300px; /* Limit width to fit screen */
+            z-index: 10000; /* Increased z-index */
+            opacity: 0;
+            transform: translateY(10px); /* Start below and slide up */
+            visibility: hidden;
+            transition: all 0.2s ease;
+            padding: 16px;
+            display: block; /* Ensure it's displayed */
+        }
+
+        .user-menu-modal.active {
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible;
+        }
+
+        .user-menu-trigger:hover .user-menu-modal {
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #4d4d4f;
+            margin-bottom: 12px;
+        }
+
+        .user-avatar-large {
+            width: 48px;
+            height: 48px;
+            background: #10a37f;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .user-profile-info h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .user-profile-info p {
+            font-size: 12px;
+            color: #8e8ea0;
+        }
+
+        .menu-divider {
+            height: 1px;
+            background: #4d4d4f;
+            margin: 8px 0;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            font-size: 14px;
+            color: #ececf1;
+        }
+
+        .menu-item:hover {
+            background: #343541;
+        }
+
+        .menu-item .icon {
+            width: 20px;
+            text-align: center;
+            color: #8e8ea0;
+        }
+
+        .menu-item .menu-text {
+            flex: 1;
+        }
+
+        .menu-item .arrow {
+            color: #8e8ea0;
+            font-size: 12px;
+        }
+
+        .menu-item.upgrade-plan {
+            background: rgba(16, 163, 127, 0.1);
+            border: 1px solid rgba(16, 163, 127, 0.3);
+            color: #10a37f;
+            border-radius: 8px;
+            margin-bottom: 4px;
+        }
+
+        .menu-item.upgrade-plan:hover {
+            background: rgba(16, 163, 127, 0.15);
+        }
+
+        .menu-item.upgrade-plan .icon {
+            color: #10a37f;
+        }
+
+        .menu-item.logout {
+            color: #ff6b6b;
+            margin-top: 4px;
+        }
+
+        .menu-item.logout:hover {
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .menu-item.logout .icon {
+            color: #ff6b6b;
         }
 
         /* Main Chat Area */
@@ -501,13 +648,6 @@
                     <i class="fas fa-plus"></i>
                     New chat
                 </button>
-                <form method="POST" action="{{ route('logout') }}" class="mt-2">
-                    @csrf
-                    <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded">
-                        <i class="fas fa-sign-out-alt mr-2"></i>
-                        Logout
-                    </button>
-                </form>
             </div>
             
             <div class="history-list" id="historyList">
@@ -527,7 +667,7 @@
             </div>
             
             <div class="sidebar-footer">
-                <div class="user-info">
+                <div class="user-menu-trigger" id="userMenuTrigger">
                     <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
                     <div class="user-details">
                         <div class="user-email text-xs text-gray-400">{{ auth()->user()->email }}</div>
@@ -546,6 +686,64 @@
                             </span>
                         </div>
                     </div>
+                    <i class="fas fa-chevron-down" style="font-size: 12px; color: #8e8ea0;"></i>
+                </div>
+
+                <div class="user-menu-modal" id="userMenuModal">
+                    <div class="user-profile">
+                        <div class="user-avatar-large">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
+                        <div class="user-profile-info">
+                            <h3>{{ auth()->user()->name }}</h3>
+                            <p>{{ auth()->user()->email }}</p>
+                        </div>
+                    </div>
+
+                    <div class="menu-divider"></div>
+
+                    <div class="menu-item upgrade-plan" onclick="window.location.href='{{ route('pricing.index') }}'">
+                        <div class="icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="menu-text">Upgrade plan</div>
+                        <div class="arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+
+                    <div class="menu-item" onclick="window.location.href='{{ route('profile.edit') }}'">
+                        <div class="icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="menu-text">User profile</div>
+                        <div class="arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+
+                    <div class="menu-item" onclick="window.location.href='{{ route('profile.edit') }}'">
+                        <div class="icon">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div class="menu-text">Settings</div>
+                        <div class="arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+
+                    <div class="menu-divider"></div>
+
+                    <form method="POST" action="{{ route('logout') }}" style="margin: 0;">
+                        @csrf
+                        <button type="submit" class="menu-item logout" style="width: 100%; text-align: left; border: none; background: none; padding: 0;">
+                            <div class="icon">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </div>
+                            <div class="menu-text">Logout</div>
+                            <div class="arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -1305,6 +1503,64 @@
                 console.warn('Caught failed to load chat error, ignoring...');
             }
         });
+
+        // User Menu Modal Functionality - placed at end to ensure elements are loaded
+        (function() {
+            const userMenuTrigger = document.getElementById('userMenuTrigger');
+            const userMenuModal = document.getElementById('userMenuModal');
+
+            if (userMenuTrigger && userMenuModal) {
+                console.log('User menu elements found, attaching event listeners');
+                
+                // Toggle modal on click
+                userMenuTrigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    console.log('User menu clicked, toggling modal');
+                    console.log('Current modal classList:', userMenuModal.classList);
+                    
+                    // Force toggle the active class
+                    if (userMenuModal.classList.contains('active')) {
+                        userMenuModal.classList.remove('active');
+                        console.log('Removed active class');
+                    } else {
+                        userMenuModal.classList.add('active');
+                        console.log('Added active class');
+                    }
+                    
+                    // Also try direct style manipulation for debugging
+                    if (userMenuModal.classList.contains('active')) {
+                        userMenuModal.style.visibility = 'visible';
+                        userMenuModal.style.opacity = '1';
+                        userMenuModal.style.transform = 'translateY(0)';
+                        console.log('Forced modal to visible');
+                    }
+                });
+
+                // Close modal when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!userMenuModal.contains(e.target) && !userMenuTrigger.contains(e.target)) {
+                        userMenuModal.classList.remove('active');
+                        userMenuModal.style.visibility = 'hidden';
+                        userMenuModal.style.opacity = '0';
+                        userMenuModal.style.transform = 'translateY(10px)'; // Match the starting position
+                    }
+                });
+
+                // Close modal on ESC key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        userMenuModal.classList.remove('active');
+                        userMenuModal.style.visibility = 'hidden';
+                        userMenuModal.style.opacity = '0';
+                        userMenuModal.style.transform = 'translateY(10px)'; // Match the starting position
+                    }
+                });
+            } else {
+                console.error('User menu trigger or modal not found');
+                console.log('userMenuTrigger:', userMenuTrigger);
+                console.log('userMenuModal:', userMenuModal);
+            }
+        })();
     </script>
 </body>
 </html>
