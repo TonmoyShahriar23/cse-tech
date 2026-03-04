@@ -125,6 +125,8 @@ class Registerwithotpcontroller extends Controller
         // Log in the user
         auth()->login($user);
 
-        return redirect()->route('chat.index')->with('success', 'Registration successful! Welcome to the chat.');
+        // Redirect to success page after OTP verification instead of chat page
+        // return redirect()->route('chat.index')->with('success', 'Registration successful! Welcome to the chat.');
+        return redirect('/success')->with('success', 'Registration successful! Your account has been created.');
     }
 }

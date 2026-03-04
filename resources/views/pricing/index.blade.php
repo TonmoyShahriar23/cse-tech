@@ -622,13 +622,24 @@
                 const planPrice = button.closest('.plan-card').querySelector('.plan-price').textContent.trim();
                 
                 if (button.classList.contains('business-upgrade')) {
-                    // Special handling for business plan
-                    alert(`Proceeding to upgrade to ${planName} plan for ${planPrice}\n\nThis will redirect you to the payment processing page where you can complete your subscription for $30/month.`);
-                    // In a real implementation, this would redirect to payment processing
-                    // window.location.href = '/checkout/business';
+                    // Business plan - redirect to payment gateway
+                    alert(`Proceeding to upgrade to ${planName} plan for ${planPrice}\n\nRedirecting to payment gateway...`);
+                    window.location.href = 'http://127.0.0.1:8000/payment';
+                } else if (planName === 'Go') {
+                    // Go plan - redirect to payment gateway
+                    alert(`Proceeding to upgrade to ${planName} plan for ${planPrice}\n\nRedirecting to payment gateway...`);
+                    window.location.href = 'http://127.0.0.1:8000/payment';
+                } else if (planName === 'Plus') {
+                    // Plus plan - redirect to payment gateway
+                    alert(`Proceeding to upgrade to ${planName} plan for ${planPrice}\n\nRedirecting to payment gateway...`);
+                    window.location.href = 'http://127.0.0.1:8000/payment';
+                } else if (planName === 'Pro') {
+                    // Pro plan - redirect to payment gateway
+                    alert(`Proceeding to upgrade to ${planName} plan for ${planPrice}\n\nRedirecting to payment gateway...`);
+                    window.location.href = 'http://127.0.0.1:8000/payment';
                 } else {
-                    alert(`Upgrade to ${planName} plan would be processed here.`);
-                    // In a real implementation, this would redirect to payment processing
+                    // Current plan or other buttons
+                    alert(`You are already on the ${planName} plan.`);
                 }
             });
         });
