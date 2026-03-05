@@ -168,6 +168,23 @@ class SslCommerzPaymentController extends Controller
         if ($request->isMethod('post') && $request->status == 'VALID') {
             \Log::info('Processing POST success request with VALID status');
             
+
+            $update_product = \DB::table('orders')
+                ->where('transaction_id', $request->tran_id)
+                ->update(['status' => 'Processing']);
+
+          
+            \Log::info('Database Update Result for ' . $request->tran_id . ': ' . $update_product);
+
+
+
+
+
+
+
+
+
+
             // Store payment success data in session
             session([
                 'payment_status' => 'success',
