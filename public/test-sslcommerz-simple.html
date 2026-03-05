@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSLCommerz Simple Redirect Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 5px;
+            display: none;
+        }
+        .success-message {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .info-box {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SSLCommerz Simple Redirect Test</h1>
+        
+        <div class="info-box">
+            <h3>🔧 Simple Solution:</h3>
+            <p><strong>Problem:</strong> SSLCommerz OTP redirect was causing "about:blank#blocked" error.</p>
+            <p><strong>Solution:</strong> Created a simple HTML redirect page that SSLCommerz can redirect to directly.</p>
+            <p><strong>New Flow:</strong> SSLCommerz → /sslcommerz-redirect.html → JavaScript redirect → /payment/success</p>
+        </div>
+
+        <div class="test-section">
+            <h3>Test the Simple Redirect</h3>
+            <p>This test simulates what happens when SSLCommerz redirects to our simple redirect page.</p>
+            <button class="btn" onclick="testSimpleRedirect()">Test Simple Redirect</button>
+            <button class="btn" onclick="testDirectSuccess()">Test Direct Success Page</button>
+        </div>
+
+        <div class="result" id="result">
+            <h3>Test Results:</h3>
+            <p><strong>Status:</strong> <span id="testStatus">-</span></p>
+            <p><strong>Response:</strong></p>
+            <div id="serverResponse" style="background: white; padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap;"></div>
+        </div>
+    </div>
+
+    <script>
+        function testSimpleRedirect() {
+            const resultDiv = document.getElementById('result');
+            const statusSpan = document.getElementById('testStatus');
+            const responseDiv = document.getElementById('serverResponse');
+            
+            resultDiv.style.display = 'block';
+            statusSpan.textContent = 'Testing...';
+            responseDiv.textContent = 'Loading...';
+            
+            // Test the simple redirect page
+            fetch('/sslcommerz-redirect.html')
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    throw new Error('HTTP ' + response.status);
+                }
+            })
+            .then(html => {
+                responseDiv.innerHTML = html;
+                
+                // Check if the expected redirect script is present
+                if (html.includes('window.location.href = \'http://127.0.0.1:8000/payment/success\'')) {
+                    statusSpan.innerHTML = '<span style="color: green; font-weight: bold;">✅ SUCCESS</span> - Simple redirect page loaded correctly!';
+                    statusSpan.style.color = 'green';
+                } else {
+                    statusSpan.innerHTML = '<span style="color: red; font-weight: bold;">❌ FAILED</span> - Redirect script not found!';
+                    statusSpan.style.color = 'red';
+                }
+            })
+            .catch(error => {
+                statusSpan.innerHTML = '<span style="color: red; font-weight: bold;">❌ ERROR</span> - ' + error.message;
+                statusSpan.style.color = 'red';
+                responseDiv.textContent = 'Error: ' + error.message;
+            });
+        }
+
+        function testDirectSuccess() {
+            const resultDiv = document.getElementById('result');
+            const statusSpan = document.getElementById('testStatus');
+            const responseDiv = document.getElementById('serverResponse');
+            
+            resultDiv.style.display = 'block';
+            statusSpan.textContent = 'Testing...';
+            responseDiv.textContent = 'Loading...';
+            
+            // Test the success page directly
+            fetch('/payment/success')
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    throw new Error('HTTP ' + response.status);
+                }
+            })
+            .then(html => {
+                responseDiv.innerHTML = html;
+                
+                // Check if the expected success message is present
+                if (html.includes('Your Payment is Successful!')) {
+                    statusSpan.innerHTML = '<span style="color: green; font-weight: bold;">✅ SUCCESS</span> - Success page loaded correctly!';
+                    statusSpan.style.color = 'green';
+                } else {
+                    statusSpan.innerHTML = '<span style="color: red; font-weight: bold;">❌ FAILED</span> - Success message not found!';
+                    statusSpan.style.color = 'red';
+                }
+            })
+            .catch(error => {
+                statusSpan.innerHTML = '<span style="color: red; font-weight: bold;">❌ ERROR</span> - ' + error.message;
+                statusSpan.style.color = 'red';
+                responseDiv.textContent = 'Error: ' + error.message;
+            });
+        }
+    </script>
+</body>
+</html>

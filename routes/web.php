@@ -1,5 +1,3 @@
-
-
 <?php
 
 use App\Http\Controllers\StudentController;
@@ -187,6 +185,10 @@ Route::get('/pricing', function() {
     return view('pricing.index');
 })->name('pricing.index');
 
+// Payment success page route
+Route::get('/payment/success', function() {
+    return view('payment.success');
+})->name('payment.success');
 
 // SSLCOMMERZ Start
 Route::get('/example1', [SslCommerzPaymentController::class, 'exampleEasyCheckout']);
@@ -196,10 +198,48 @@ Route::get('/payment', [SslCommerzPaymentController::class, 'exampleHostedChecko
 Route::post('/pay', [SslCommerzPaymentController::class, 'index']);
 Route::post('/pay-via-ajax', [SslCommerzPaymentController::class, 'payViaAjax']);
 
-Route::post('/success', [SslCommerzPaymentController::class, 'success']);
+Route::match(['get','post'], '/success', [SslCommerzPaymentController::class, 'success']);
 Route::post('/fail', [SslCommerzPaymentController::class, 'fail']);
 Route::post('/cancel', [SslCommerzPaymentController::class, 'cancel']);
 
 Route::post('/ipn', [SslCommerzPaymentController::class, 'ipn']);
 //SSLCOMMERZ END
 
+// Test routes for success page testing
+Route::get('/test-success', function() {
+    return file_get_contents(public_path('test-success.html'));
+});
+
+Route::get('/test-success-form', function() {
+    return file_get_contents(public_path('test-success-form.html'));
+});
+
+// SSLCommerz redirect test route
+Route::get('/test-sslcommerz-redirect', function() {
+    return file_get_contents(public_path('test-sslcommerz-redirect.html'));
+});
+
+// Payment redirect routes for handling SSLCommerz OTP redirect issues
+Route::get('/payment/redirect', [App\Http\Controllers\PaymentRedirectController::class, 'handleSslCommerzRedirect'])->name('payment.redirect');
+Route::get('/payment/js-redirect', [App\Http\Controllers\PaymentRedirectController::class, 'handleSslCommerzRedirectJS'])->name('payment.js-redirect');
+
+// Test routes for payment flow testing
+Route::get('/test-complete-payment-flow', function() {
+    return file_get_contents(public_path('test-complete-payment-flow.html'));
+});
+
+// Simple SSLCommerz redirect test
+Route::get('/test-sslcommerz-simple', function() {
+    return file_get_contents(public_path('test-sslcommerz-simple.html'));
+});
+
+// Test session management routes
+Route::post('/set-session-test', function(\Illuminate\Http\Request $request) {
+    session($request->all());
+    return response()->json(['success' => true, 'message' => 'Session data set']);
+});
+
+Route::post('/clear-session-test', function() {
+    session()->flush();
+    return response()->json(['success' => true, 'message' => 'Session cleared']);
+});

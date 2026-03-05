@@ -186,21 +186,21 @@
     <div class="container">
         <div class="success-icon"></div>
         
-        <h1>Payment Successful! 🎉</h1>
+        <h1>Your Payment is Successful! 🎉</h1>
         <p class="subtitle">Your transaction has been completed successfully. Thank you for choosing our service!</p>
         
         <div class="details-box">
             <div class="detail-row">
                 <span class="detail-label">Transaction ID</span>
-                <span class="detail-value">{{ request('tran_id', 'N/A') }}</span>
+                <span class="detail-value">{{ session('tran_id', 'N/A') }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-label">Amount</span>
-                <span class="detail-value">{{ request('amount', 'N/A') }} {{ request('currency', 'BDT') }}</span>
+                <span class="detail-value">{{ session('amount', 'N/A') }} {{ session('currency', 'BDT') }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-label">Payment Method</span>
-                <span class="detail-value">{{ request('card_type', 'SSLCommerz') }}</span>
+                <span class="detail-value">{{ session('card_type', 'SSLCommerz') }}</span>
             </div>
             <div class="detail-row highlight-row">
                 <span class="detail-label">Status</span>

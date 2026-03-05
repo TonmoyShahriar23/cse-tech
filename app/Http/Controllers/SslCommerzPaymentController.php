@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Library\SslCommerz\SslCommerzNotification;
-use Log;
+use Illuminate\Support\Facades\Log;
 
 class SslCommerzPaymentController extends Controller
 {
@@ -162,51 +162,64 @@ class SslCommerzPaymentController extends Controller
 
     public function success(Request $request)
     {
-        $tran_id = $request->input('tran_id');
-        $amount = $request->input('amount');
-        $currency = $request->input('currency');
+        \Log::info('SSLCommerz success hit: method=' . $request->method() . ', tran_id=' . ($request->tran_id ?? 'N/A') . ', status=' . ($request->status ?? 'N/A'));
+        
+        // Handle POST request (normal payment flow)
+        if ($request->isMethod('post') && $request->status == 'VALID') {
+            \Log::info('Processing POST success request with VALID status');
+            
+            // Store payment success data in session
+            session([
+                'payment_status' => 'success',
+                'payment_success' => true,
+                'tran_id' => $request->tran_id,
+                'amount' => $request->amount,
+                'currency' => $request->currency ?? 'BDT',
+                'card_type' => $request->card_type ?? 'SSLCommerz'
+            ]);
 
-        $sslc = new SslCommerzNotification();
-
-        #Check order status in order tabel against the transaction id or order id.
-        $order_details = DB::table('orders')
-            ->where('transaction_id', $tran_id)
-            ->select('transaction_id', 'status', 'currency', 'amount')->first();
-
-        if ($order_details->status == 'Pending') {
-            $validation = $sslc->orderValidate($request->all(), $tran_id, $amount, $currency);
-
-            if ($validation) {
-                /*
-                That means IPN did not work or IPN URL was not set in your merchant panel. Here you need to update order status
-                in order table as Processing or Complete.
-                Here you can also sent sms or email for successfull transaction to customer
-                */
-                $update_product = DB::table('orders')
-                    ->where('transaction_id', $tran_id)
-                    ->update(['status' => 'Processing']);
-
-                return view('payment.success', [
-                    'tran_id' => $tran_id,
-                    'amount' => $amount,
-                    'currency' => $currency,
-                    'card_type' => $request->input('card_type', 'SSLCommerz')
+            \Log::info('Payment success data stored in session for tran_id: ' . $request->tran_id);
+            
+            // Return JavaScript redirect to avoid about:blank#blocked issues
+            return response()->view('payment.js_redirect', [
+                'success_url' => route('payment.success')
+            ]);
+        }
+        
+        // Handle GET request (SSLCommerz OTP redirect scenario)
+        if ($request->isMethod('get')) {
+            \Log::info('Processing GET request (likely SSLCommerz OTP redirect)');
+            
+            // Check if we have payment success data in session
+            if (session('payment_success')) {
+                \Log::info('Found payment success data in session, redirecting to success page');
+                
+                // Return JavaScript redirect to avoid about:blank#blocked issues
+                return response()->view('payment.js_redirect', [
+                    'success_url' => route('payment.success')
                 ]);
             }
-        } else if ($order_details->status == 'Processing' || $order_details->status == 'Complete') {
-            /*
-             That means through IPN Order status already updated. Now you can just show the customer that transaction is completed. No need to udate database.
-             */
-            return view('payment.success', [
-                'tran_id' => $tran_id,
-                'amount' => $amount,
-                'currency' => $currency,
-                'card_type' => $request->input('card_type', 'SSLCommerz')
-            ]);
-        } else {
-            #That means something wrong happened. You can redirect customer to your product page.
+            
+            // No session data found - this might be a direct access or expired session
+            \Log::warning('GET request without payment success session data');
             return redirect('/pricing')->with('error', 'Invalid Transaction');
         }
+
+        // Fallback for invalid requests
+        \Log::warning('Invalid request to success endpoint');
+        return redirect('/payment/fail');
+    }
+
+    public function successPage()
+    {
+        if(session('payment_status') != 'success'){
+            return redirect('/pricing');
+        }
+
+        return view('payment.success',[
+            'tran_id' => session('tran_id'),
+            'amount' => session('amount')
+        ]);
     }
 
     public function fail(Request $request)

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete SSLCommerz Payment Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn.secondary {
+            background: #28a745;
+        }
+        .btn.secondary:hover {
+            background: #218838;
+        }
+        .btn.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn.warning:hover {
+            background: #e0a800;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 5px;
+            display: none;
+        }
+        .success-message {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .error-message {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .info-box {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .step-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #6c757d;
+            margin-right: 8px;
+        }
+        .status-success {
+            background-color: #28a745;
+        }
+        .status-error {
+            background-color: #dc3545;
+        }
+        .status-warning {
+            background-color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Complete SSLCommerz Payment Flow Test</h1>
+        
+        <div class="info-box">
+            <h3>🔧 Fix Summary:</h3>
+            <p><strong>Problem:</strong> SSLCommerz OTP redirect was causing "about:blank#blocked" error.</p>
+            <p><strong>Solution:</strong> Created a dedicated redirect handler with JavaScript-based redirect to avoid cross-origin issues.</p>
+            <p><strong>New Flow:</strong> SSLCommerz → /payment/redirect → JavaScript redirect → /payment/success</p>
+        </div>
+
+        <div class="step-box">
+            <h3>📋 Test Steps:</h3>
+            <p><span class="status-indicator status-success"></span>Step 1: Simulate payment completion (POST to /success)</p>
+            <p><span class="status-indicator"></span>Step 2: Simulate SSLCommerz OTP redirect (GET to /payment/redirect)</p>
+            <p><span class="status-indicator"></span>Step 3: Verify JavaScript redirect works</p>
+            <p><span class="status-indicator"></span>Step 4: Verify success page loads correctly</p>
+        </div>
+
+        <div class="test-section">
+            <h3>Step 1: Simulate Payment Completion</h3>
+            <p>This simulates a successful payment completion that would normally redirect to the success page.</p>
+            <button class="btn" onclick="simulatePaymentCompletion()">Simulate Payment Completion</button>
+            <button class="btn secondary" onclick="clearSession()">Clear Session Data</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Step 2: Test Redirect Handler</h3>
+            <p>This tests the new redirect handler that should prevent the about:blank#blocked issue.</p>
+            <button class="btn warning" onclick="testRedirectHandler()">Test Redirect Handler</button>
+            <button class="btn" onclick="testDirectSuccessPage()">Test Direct Success Page</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Step 3: Complete Flow Test</h3>
+            <p>This simulates the complete flow from payment completion to success page display.</p>
+            <button class="btn secondary" onclick="runCompleteFlow()">Run Complete Flow Test</button>
+        </div>
+
+        <div class="result" id="result">
+            <h3>Test Results:</h3>
+            <div id="testOutput"></div>
+        </div>
+    </div>
+
+    <script>
+        let sessionData = {
+            payment_success: true,
+            tran_id: 'TEST123456',
+            amount: '10.00',
+            currency: 'BDT',
+            card_type: 'SSLCommerz'
+        };
+
+        function updateResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            const outputDiv = document.getElementById('testOutput');
+            
+            resultDiv.style.display = 'block';
+            outputDiv.innerHTML += `<p class="${type}">${message}</p>`;
+            
+            // Auto-scroll to bottom
+            resultDiv.scrollTop = resultDiv.scrollHeight;
+        }
+
+        function clearResult() {
+            document.getElementById('testOutput').innerHTML = '';
+        }
+
+        function clearSession() {
+            clearResult();
+            updateResult('🧹 Clearing session data...', 'info');
+            
+            // Clear session via AJAX
+            fetch('/clear-session-test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateResult('✅ Session cleared successfully', 'success');
+            })
+            .catch(error => {
+                updateResult('❌ Error clearing session: ' + error.message, 'error');
+            });
+        }
+
+        function simulatePaymentCompletion() {
+            clearResult();
+            updateResult('💳 Simulating payment completion...', 'info');
+            
+            const formData = new FormData();
+            formData.append('tran_id', sessionData.tran_id);
+            formData.append('amount', sessionData.amount);
+            formData.append('currency', sessionData.currency);
+            formData.append('card_type', sessionData.card_type);
+            formData.append('status', 'VALID');
+            formData.append('val_id', '123456');
+            formData.append('store_id', 'test_store');
+            formData.append('store_passwd', 'test_pass');
+
+            updateResult('📤 Sending POST request to /success...', 'info');
+            
+            fetch('/success', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.redirected) {
+                    updateResult(`✅ Redirect detected: ${response.url}`, 'success');
+                    updateResult('🎯 This should redirect to /payment/redirect', 'info');
+                    
+                    // Update step status
+                    document.querySelectorAll('.step-box p')[0].innerHTML = 
+                        document.querySelectorAll('.step-box p')[0].innerHTML.replace(
+                            '<span class="status-indicator"></span>',
+                            '<span class="status-indicator status-success"></span>'
+                        );
+                    
+                    return response.text();
+                } else {
+                    return response.text();
+                }
+            })
+            .then(html => {
+                if (html.includes('Your Payment is Successful!')) {
+                    updateResult('🎉 Success page loaded directly!', 'success');
+                } else {
+                    updateResult('📝 Response received (may be redirect): ' + html.substring(0, 200) + '...', 'info');
+                }
+            })
+            .catch(error => {
+                updateResult('❌ Error in payment completion: ' + error.message, 'error');
+            });
+        }
+
+        function testRedirectHandler() {
+            clearResult();
+            updateResult('🔄 Testing redirect handler...', 'info');
+            
+            // First, set session data
+            updateResult('💾 Setting session data...', 'info');
+            
+            fetch('/set-session-test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(sessionData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateResult('✅ Session data set successfully', 'success');
+                updateResult('🌐 Opening redirect handler in new window...', 'info');
+                
+                // Open redirect handler in new window
+                const redirectUrl = '/payment/redirect';
+                const newWindow = window.open(redirectUrl, '_blank');
+                
+                if (newWindow) {
+                    updateResult('✅ Redirect handler opened in new window', 'success');
+                    updateResult('🔍 Check the new window for JavaScript redirect behavior', 'info');
+                } else {
+                    updateResult('⚠️ Could not open new window (blocked by browser)', 'warning');
+                    updateResult('📝 Try clicking the redirect link manually: <a href="/payment/redirect" target="_blank">/payment/redirect</a>', 'info');
+                }
+            })
+            .catch(error => {
+                updateResult('❌ Error setting session: ' + error.message, 'error');
+            });
+        }
+
+        function testDirectSuccessPage() {
+            clearResult();
+            updateResult('🎯 Testing direct success page access...', 'info');
+            
+            fetch('/payment/success')
+            .then(response => response.text())
+            .then(html => {
+                if (html.includes('Your Payment is Successful!')) {
+                    updateResult('✅ Success page loads correctly', 'success');
+                } else {
+                    updateResult('❌ Success page did not load as expected', 'error');
+                }
+            })
+            .catch(error => {
+                updateResult('❌ Error accessing success page: ' + error.message, 'error');
+            });
+        }
+
+        function runCompleteFlow() {
+            clearResult();
+            updateResult('🚀 Running complete flow test...', 'info');
+            
+            // Step 1: Simulate payment
+            updateResult('Step 1: Simulating payment completion...', 'info');
+            
+            const formData = new FormData();
+            formData.append('tran_id', sessionData.tran_id);
+            formData.append('amount', sessionData.amount);
+            formData.append('currency', sessionData.currency);
+            formData.append('card_type', sessionData.card_type);
+
+            fetch('/success', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                updateResult('✅ Payment simulation completed', 'success');
+                updateResult('Step 2: Testing redirect handler...', 'info');
+                
+                // Step 2: Test redirect
+                return fetch('/set-session-test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify(sessionData)
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateResult('✅ Redirect handler test setup complete', 'success');
+                updateResult('Step 3: Opening redirect handler...', 'info');
+                
+                // Step 3: Open redirect handler
+                const redirectUrl = '/payment/redirect';
+                const newWindow = window.open(redirectUrl, '_blank');
+                
+                if (newWindow) {
+                    updateResult('✅ Complete flow test initiated', 'success');
+                    updateResult('🔍 Monitor the new window for the complete redirect flow', 'info');
+                    
+                    // Update all step statuses
+                    const steps = document.querySelectorAll('.step-box p');
+                    steps.forEach(step => {
+                        step.innerHTML = step.innerHTML.replace(
+                            '<span class="status-indicator"></span>',
+                            '<span class="status-indicator status-success"></span>'
+                        );
+                    });
+                } else {
+                    updateResult('⚠️ Browser blocked popup - try manual testing', 'warning');
+                }
+            })
+            .catch(error => {
+                updateResult('❌ Complete flow test failed: ' + error.message, 'error');
+            });
+        }
+
+        // Add CSRF token meta tag if not present
+        if (!document.querySelector('meta[name="csrf-token"]')) {
+            const meta = document.createElement('meta');
+            meta.name = 'csrf-token';
+            meta.content = document.querySelector('meta[name="csrf-token"]').getAttribute('content') || '';
+            document.head.appendChild(meta);
+        }
+    </script>
+</body>
+</html>

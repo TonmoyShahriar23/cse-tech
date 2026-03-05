@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSLCommerz Success Test - POST Method</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-form {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .test-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .test-form input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background: #218838;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .success-message {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .note {
+            color: #6c757d;
+            font-size: 14px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ SSLCommerz Success Page Test (POST Method)</h1>
+        <p>This test properly simulates the SSLCommerz success callback using POST method to verify the "Your Payment is Successful!" message is displayed correctly.</p>
+        
+        <div class="info-box">
+            <h3>📋 Test Information</h3>
+            <p><strong>Expected Message:</strong> <span class="success-message">"Your Payment is Successful!"</span></p>
+            <p><strong>Test Method:</strong> POST request (as required by SSLCommerz)</p>
+            <p><strong>Route:</strong> /success (POST only)</p>
+            <p class="note">Note: The success route only accepts POST requests for security reasons.</p>
+        </div>
+        
+        <div class="test-form">
+            <h3>🔧 Test Parameters</h3>
+            <form id="testForm" action="/success" method="POST">
+                <input type="hidden" name="_token" value="{{ csrf_token() ?? 'dummy-token' }}">
+                
+                <label for="tran_id">Transaction ID:</label>
+                <input type="text" id="tran_id" name="tran_id" value="TEST123456">
+                
+                <label for="amount">Amount:</label>
+                <input type="text" id="amount" name="amount" value="10.00">
+                
+                <label for="currency">Currency:</label>
+                <input type="text" id="currency" name="currency" value="BDT">
+                
+                <label for="card_type">Card Type:</label>
+                <input type="text" id="card_type" name="card_type" value="SSLCommerz">
+                
+                <button type="submit" class="btn">🚀 Test Success Page (POST)</button>
+            </form>
+        </div>
+        
+        <div class="info-box">
+            <h3>🎯 How to Use This Test</h3>
+            <ol>
+                <li>Fill in the test parameters (or use the defaults)</li>
+                <li>Click the "Test Success Page (POST)" button</li>
+                <li>The form will submit a POST request to /success</li>
+                <li>You will be redirected to the success page</li>
+                <li>Verify that "Your Payment is Successful!" message is displayed</li>
+            </ol>
+        </div>
+        
+        <div class="info-box">
+            <h3>🔧 Technical Details</h3>
+            <p><strong>Implementation:</strong> Modified <code>resources/views/payment/success.blade.php</code></p>
+            <p><strong>Change:</strong> Updated heading from "Payment Successful! 🎉" to "Your Payment is Successful! 🎉"</p>
+            <p><strong>Route:</strong> <code>POST /success</code> (defined in routes/web.php)</p>
+            <p><strong>Controller:</strong> <code>SslCommerzPaymentController@success</code></p>
+        </div>
+    </div>
+</body>
+</html>

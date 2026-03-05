@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSLCommerz Payment Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; text-align: center; }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .test-button:hover { background-color: #0056b3; }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .test-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SSLCommerz Payment Flow Test</h1>
+        
+        <div class="test-section">
+            <h3>Test 1: Configuration Check</h3>
+            <p>Check if SSLCommerz configuration is properly loaded:</p>
+            <button class="test-button" onclick="testConfig()">Test Configuration</button>
+            <div id="config-result" class="test-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: Route Check</h3>
+            <p>Verify payment routes are accessible:</p>
+            <button class="test-button" onclick="testRoutes()">Test Routes</button>
+            <div id="routes-result" class="test-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: Payment Flow Test</h3>
+            <p>Test the complete payment flow:</p>
+            <button class="test-button" onclick="testPaymentFlow()">Test Payment Flow</button>
+            <div id="payment-result" class="test-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 4: Manual Payment Initiation</h3>
+            <p>Initiate a test payment:</p>
+            <button class="test-button" onclick="initiatePayment()">Start Payment</button>
+            <div id="manual-result" class="test-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 5: Session Management Test</h3>
+            <p>Test session handling for payment data:</p>
+            <button class="test-button" onclick="testSession()">Test Session</button>
+            <div id="session-result" class="test-result"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testConfig() {
+            const resultDiv = document.getElementById('config-result');
+            resultDiv.innerHTML = 'Testing configuration...';
+            
+            try {
+                // Test if we can access the config
+                const response = await fetch('/test-groq');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = '✅ Configuration test passed\n' + JSON.stringify(data, null, 2);
+                    resultDiv.className = 'test-result success';
+                } else {
+                    resultDiv.innerHTML = '❌ Configuration test failed\n' + JSON.stringify(data, null, 2);
+                    resultDiv.className = 'test-result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '❌ Configuration test error: ' + error.message;
+                resultDiv.className = 'test-result error';
+            }
+        }
+
+        async function testRoutes() {
+            const resultDiv = document.getElementById('routes-result');
+            resultDiv.innerHTML = 'Testing routes...';
+            
+            const routes = [
+                { url: '/success', method: 'POST', desc: 'Success endpoint' },
+                { url: '/payment/success', method: 'GET', desc: 'Success page' },
+                { url: '/payment/redirect', method: 'GET', desc: 'Redirect handler' }
+            ];
+
+            let results = [];
+            
+            for (const route of routes) {
+                try {
+                    const response = await fetch(route.url, { method: route.method });
+                    results.push(`${route.desc}: ${response.status} ${response.statusText}`);
+                } catch (error) {
+                    results.push(`${route.desc}: ERROR - ${error.message}`);
+                }
+            }
+            
+            resultDiv.innerHTML = results.join('\n');
+            resultDiv.className = 'test-result info';
+        }
+
+        async function testPaymentFlow() {
+            const resultDiv = document.getElementById('payment-result');
+            resultDiv.innerHTML = 'Testing payment flow...';
+            
+            try {
+                // Test payment initiation
+                const response = await fetch('/pay', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        total_amount: '10.00',
+                        currency: 'BDT',
+                        tran_id: 'test_' + Date.now(),
+                        cus_name: 'Test Customer',
+                        cus_email: 'test@example.com',
+                        cus_phone: '01700000000'
+                    })
+                });
+
+                const data = await response.json();
+                resultDiv.innerHTML = 'Payment flow test result:\n' + JSON.stringify(data, null, 2);
+                resultDiv.className = 'test-result info';
+                
+            } catch (error) {
+                resultDiv.innerHTML = 'Payment flow test error: ' + error.message;
+                resultDiv.className = 'test-result error';
+            }
+        }
+
+        function initiatePayment() {
+            const resultDiv = document.getElementById('manual-result');
+            resultDiv.innerHTML = 'Redirecting to payment...';
+            
+            // Create a form to submit payment data
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/pay';
+            
+            // Add CSRF token
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            form.appendChild(csrfInput);
+            
+            // Add payment data
+            const amountInput = document.createElement('input');
+            amountInput.type = 'hidden';
+            amountInput.name = 'total_amount';
+            amountInput.value = '10.00';
+            form.appendChild(amountInput);
+            
+            const currencyInput = document.createElement('input');
+            currencyInput.type = 'hidden';
+            currencyInput.name = 'currency';
+            currencyInput.value = 'BDT';
+            form.appendChild(currencyInput);
+            
+            const tranIdInput = document.createElement('input');
+            tranIdInput.type = 'hidden';
+            tranIdInput.name = 'tran_id';
+            tranIdInput.value = 'manual_' + Date.now();
+            form.appendChild(tranIdInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        async function testSession() {
+            const resultDiv = document.getElementById('session-result');
+            resultDiv.innerHTML = 'Testing session management...';
+            
+            try {
+                // Test setting session data
+                const setResponse = await fetch('/set-session-test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        payment_success: true,
+                        tran_id: 'test_session_' + Date.now(),
+                        amount: '10.00',
+                        currency: 'BDT'
+                    })
+                });
+                
+                const setData = await setResponse.json();
+                
+                // Test getting session data
+                const getResponse = await fetch('/payment/success');
+                const getHtml = await getResponse.text();
+                
+                // Test clearing session
+                const clearResponse = await fetch('/clear-session-test', { method: 'POST' });
+                const clearData = await clearResponse.json();
+                
+                resultDiv.innerHTML = 'Session test results:\n' +
+                    'Set: ' + JSON.stringify(setData, null, 2) + '\n' +
+                    'Get: ' + (getHtml.includes('payment.success') ? 'Success page loaded' : 'Failed to load success page') + '\n' +
+                    'Clear: ' + JSON.stringify(clearData, null, 2);
+                resultDiv.className = 'test-result info';
+                
+            } catch (error) {
+                resultDiv.innerHTML = 'Session test error: ' + error.message;
+                resultDiv.className = 'test-result error';
+            }
+        }
+    </script>
+</body>
+</html>
