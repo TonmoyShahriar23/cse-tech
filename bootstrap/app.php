@@ -12,14 +12,15 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         
-        
+       
         $middleware->validateCsrfTokens(except: [
-            'success',
-            'cancel',
-            'fail',
-            'ipn',
-            'pay-via-ajax',
-            'success/*', 
+            '/pay',           
+            '/pay-via-ajax',   
+            '/success',        
+            '/cancel',         
+            '/fail',           
+            '/ipn',            
+            'success/*',       
             'cancel/*',
             'fail/*',
             'ipn/*',
