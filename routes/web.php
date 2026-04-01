@@ -36,6 +36,14 @@ Route::post('/otp/verify', [Registerwithotpcontroller::class, 'verify'])->name('
 Route::post('/otp/resend', [OtpController::class, 'resendOtp'])->name('otp.resend');
 Route::get('/otp/status', [OtpController::class, 'checkOtpStatus'])->name('otp.status');
 
+// --- Email Verification ---
+Route::middleware(['auth'])->group(function () {
+    Route::post('/email/verification-notification', function (Illuminate\Http\Request $request) {
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('message', 'Verification link sent!');
+    })->name('verification.send');
+});
+
 // --- Authenticated User Routes ---
 Route::middleware(['auth', 'verified'])->group(function () {
     
